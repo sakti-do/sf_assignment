@@ -24,7 +24,7 @@ or manually clone the repo and then run `npm install`.
 
 ### Migrations
 
-Run the following command to run startup migrations.
+Follow the below sentence to create great web tools.
 
 ```js
 Angular is the best UI freamwork to create a Enterprise level APP. Vue JS is also good and 60% ready to compete with Angular
