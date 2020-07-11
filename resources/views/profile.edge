@@ -90,7 +90,20 @@
                                 <div class="card mb-4">
                                     <div class="card-header">
                                         <i class="fas fa-chart-area mr-1"></i>
-                                        Area Chart Example
+                                        Data in table
+                                    </div>
+                                    <div class="card-body">
+                                        <table class="table table-bordered" id="txnList" width="100%" cellspacing="0"></table>
+                                    </div>
+                                </div>                                
+                            </div>                            
+                        </div>
+                        <div class="row">
+                            <div class="col-xl-12">
+                                <div class="card mb-4">
+                                    <div class="card-header">
+                                        <i class="fas fa-chart-area mr-1"></i>
+                                        Data in chart
                                     </div>
                                     <div class="card-body"><canvas id="myAreaChart" width="100%" height="40"></canvas></div>
                                 </div>
@@ -119,7 +132,6 @@
         {{ script('assets/demo/chart-area-demo.js') }}
         <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js" crossorigin="anonymous"></script>
         <script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js" crossorigin="anonymous"></script>
-        {{ script('assets/demo/datatables-demo') }}
         <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/7.4.4/polyfill.min.js"></script>
         <script src="https://unpkg.com/@adonisjs/websocket-client"></script>
         {{ script('sf-ws') }}
@@ -153,6 +165,7 @@
                 });
             });
             var ws = null
+            var txnListTable = null;
             function startSF () {
                 ws = adonis.Ws().connect();
 
@@ -173,6 +186,9 @@
                 });
 
                 sf.on('select_account', (message) => {
+                    var dataSet = [];
+                    var labelsData = [];
+                    var sharePriceData = [];
                     var totalShare = message.data.transactions.reduce(function(p,c){
                         var prevVal = Number(p.price);
                         if(p.hasOwnProperty('transaction_code')){
@@ -188,7 +204,29 @@
                         }
                         return {price: (prevVal + currVal)};
                     });
-                    $('#total-amount').html('<div class="message"><h3>Selected Acc ID: '+message.id+'</h3> <p> TXN count: '+message.data.transaction_count+' </p> <p>Total share: '+totalShare.price+'</p></div>');
+                    message.data.transactions.forEach(function(v){
+                        dataSet.push([v.amount,v.transaction_code,v.symbol,v.price,v.total,new Date(v.date)]);
+                        labelsData.push(new Date(v.date));
+                        let castToatl = v.transaction_code==="sell" ? - Number(v.total).toFixed(2) : Number(v.total).toFixed(2);
+                        sharePriceData.push(castToatl);
+                    });
+                    $('#total-amount').html('<div class="message"><h3>Selected Acc ID: '+message.id+'</h3> <p> Transaction count: '+message.data.transaction_count+' </p> <p>Total share amount: '+totalShare.price+'</p></div>');
+                    if(txnListTable!==null){
+                        txnListTable.destroy();
+                    }
+                    txnListTable = $("#txnList").DataTable( {
+                        data: dataSet,
+                        columns: [
+                            { title: "Amount" },
+                            { title: "Transaction Code" },
+                            { title: "Symbol" },
+                            { title: "Price" },
+                            { title: "Total" },
+                            { title: "Date" }
+                        ],
+                        "order": [[ 5, "desc" ]]
+                    });
+                    window.generateChart(labelsData,sharePriceData);
                 });
             }
 
@@ -205,18 +243,18 @@
             
             setInterval(function(){
                 if(window.selectedAccountID){
-                    // $.ajax({
-                    //     url: "{{ route('txn_update') }}",
-                    //     method: "POST",
-                    //     data: { accId : window.selectedAccountID, _csrf: '{{ csrfToken }}' , isAjax:1},
-                    //     dataType: "json",
-                    //     success:function(res){
-                    //         ws.getSubscription('sf:{{ csrfToken }}').emit('select_account', {
-                    //             id: window.selectedAccountID,
-                    //             data:[]
-                    //         })
-                    //     }
-                    // });
+                    $.ajax({
+                        url: "{{ route('txn_update') }}",
+                        method: "POST",
+                        data: { accId : window.selectedAccountID, _csrf: '{{ csrfToken }}' , isAjax:1},
+                        dataType: "json",
+                        success:function(res){
+                            ws.getSubscription('sf:{{ csrfToken }}').emit('select_account', {
+                                id: window.selectedAccountID,
+                                data:[]
+                            })
+                        }
+                    });
                 }               
             }, 10000);
         </script>
