@@ -66,7 +66,12 @@
                             @each(account in accounts)
                             <div class="col-xl-3 col-md-6">
                                 <div class="card bg-primary text-white mb-4">
-                                <div class="card-body">Account ID: {{ account }}</div>
+                                    <div class="card-body">
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="accid" id="acc-{{ account }}" value="{{ account }}">
+                                            <label class="form-check-label" for="acc-{{ account }}">Account ID: {{ account }}</label>
+                                        </div>
+                                    </div>
                                     <div class="card-footer d-flex align-items-center justify-content-between">
                                         <a class="small text-white stretched-link showproduct" data-accountID="{{ account }}" href="javascript:void(0)">View Details</a>
                                         <div class="small text-white"><i class="fas fa-angle-right"></i></div>
@@ -76,22 +81,18 @@
                             @endeach
                         </div>
                         <div class="row">
-                            <div class="col-xl-6">
+                            <div class="col-xl-6" id="total-amount">
+
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xl-12">
                                 <div class="card mb-4">
                                     <div class="card-header">
                                         <i class="fas fa-chart-area mr-1"></i>
                                         Area Chart Example
                                     </div>
                                     <div class="card-body"><canvas id="myAreaChart" width="100%" height="40"></canvas></div>
-                                </div>
-                            </div>
-                            <div class="col-xl-6">
-                                <div class="card mb-4">
-                                    <div class="card-header">
-                                        <i class="fas fa-chart-bar mr-1"></i>
-                                        Bar Chart Example
-                                    </div>
-                                    <div class="card-body"><canvas id="myBarChart" width="100%" height="40"></canvas></div>
                                 </div>
                             </div>
                         </div>
@@ -116,16 +117,18 @@
         {{ script('js/scripts') }}
         <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" crossorigin="anonymous"></script>
         {{ script('assets/demo/chart-area-demo.js') }}
-        {{ script('assets/demo/chart-bar-demo') }}
         <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js" crossorigin="anonymous"></script>
         <script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js" crossorigin="anonymous"></script>
         {{ script('assets/demo/datatables-demo') }}
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/7.4.4/polyfill.min.js"></script>
+        <script src="https://unpkg.com/@adonisjs/websocket-client"></script>
+        {{ script('sf-ws') }}
         <script>
             $(document).ready(function(){
                 $('.showproduct').on('click',function(){
                     const elm = this;
-                    const accountID = $(elm).attr("data-accountID");
-                    if(accountID!==undefined){
+                    const accountID = $(elm).attr("data-accountID");                    
+                    if(accountID!==undefined){                       
                         $.ajax({
                             url: "{{ route('products') }}",
                             method: "POST",
@@ -149,6 +152,73 @@
                     }
                 });
             });
+            var ws = null
+            function startSF () {
+                ws = adonis.Ws().connect();
+
+                ws.on('open', () => {
+                    subscribeToChannel();
+                })
+
+                ws.on('error', () => {
+                    console.error('WS connection lost');
+                })
+            }
+
+            function subscribeToChannel () {
+                const sf = ws.subscribe('sf:{{ csrfToken }}');
+
+                sf.on('error', (e) => {
+                    console.error(e);
+                });
+
+                sf.on('select_account', (message) => {
+                    var totalShare = message.data.transactions.reduce(function(p,c){
+                        var prevVal = Number(p.price);
+                        if(p.hasOwnProperty('transaction_code')){
+                            if(p.transaction_code !== 'buy'){
+                                prevVal = - Math.abs(Number(prevVal));
+                            }
+                        }
+                        var currVal = Number(c.price);
+                        if(c.hasOwnProperty('transaction_code')){
+                            if(c.transaction_code !== 'buy'){
+                                currVal = Math.abs(Number(currVal));
+                            }
+                        }
+                        return {price: (prevVal + currVal)};
+                    });
+                    $('#total-amount').html('<div class="message"><h3>Selected Acc ID: '+message.id+'</h3> <p> TXN count: '+message.data.transaction_count+' </p> <p>Total share: '+totalShare.price+'</p></div>');
+                });
+            }
+
+            $(".form-check-input").on('change',function(e){
+                if($(this).is(':checked')){
+                    window.selectedAccountID = $(this).val();
+                    ws.getSubscription('sf:{{ csrfToken }}').emit('select_account', {
+                        id: window.selectedAccountID,
+                        data:[]
+                    })
+                }
+            });
+            startSF();
+            
+            setInterval(function(){
+                if(window.selectedAccountID){
+                    // $.ajax({
+                    //     url: "{{ route('txn_update') }}",
+                    //     method: "POST",
+                    //     data: { accId : window.selectedAccountID, _csrf: '{{ csrfToken }}' , isAjax:1},
+                    //     dataType: "json",
+                    //     success:function(res){
+                    //         ws.getSubscription('sf:{{ csrfToken }}').emit('select_account', {
+                    //             id: window.selectedAccountID,
+                    //             data:[]
+                    //         })
+                    //     }
+                    // });
+                }               
+            }, 10000);
         </script>
     </body>
 </html>

@@ -21,3 +21,4 @@ Route.get('profile','ProfileController.index').as('profile').middleware(['custom
 Route.post('authenticate','AuthController.login').as('loginAuth')
 Route.get('logout','AuthController.logout').as('logout')
 Route.post('account/products','ProfileController.getAccountProducts').middleware(['customAuth']).as('products')
+Route.post('txn/update/interval','ProfileController.updateTXN').middleware(['customAuth']).as('txn_update')

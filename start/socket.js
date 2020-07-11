@@ -15,4 +15,4 @@
 
 const Ws = use('Ws')
 
-Ws.channel('sf', 'SyncDataController').middleware(['customAuth'])
+Ws.channel('sf:*', 'SyncDataController').middleware(['customAuth'])
