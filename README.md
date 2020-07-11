@@ -11,12 +11,12 @@ This is the fullstack boilerplate for AdonisJs, it comes pre-configured with.
 7. Lucid ORM
 8. Migrations and seeds
 
-## Setup
+## Desc
 
-Use the adonis command to install the blueprint
+This is an assignment project
 
 ```bash
-adonis new yardstick
+AUTO BOTS
 ```
 
 or manually clone the repo and then run `npm install`.
@@ -27,5 +27,5 @@ or manually clone the repo and then run `npm install`.
 Run the following command to run startup migrations.
 
 ```js
-adonis migration:run
+Angular is the best UI freamwork to create a Enterprise level APP. Vue JS is also good and 60% ready to compete with Angular
 ```
