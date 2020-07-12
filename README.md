@@ -1,6 +1,6 @@
 # Adonis fullstack application
 
-This is the fullstack boilerplate for AdonisJs, it comes pre-configured with.
+A web framework for web artists
 
 1. Bodyparser
 2. Session
@@ -8,21 +8,21 @@ This is the fullstack boilerplate for AdonisJs, it comes pre-configured with.
 4. Web security middleware
 5. CORS
 6. Edge template engine
-7. Lucid ORM
-8. Migrations and seeds
+7. Lucid ORM (only for RDBMS)
+8. Migrations and seeds (only for RDBMS)
 
-## Desc
+## Desc:
 
 This is an assignment project
 
 ```bash
-AUTO BOTS
+SF ASSIGNMENT
 ```
 
-or manually clone the repo and then run `npm install`.
+or manually clone the repo and then run `npm install`, then run `node server.js`
 
 
-### Migrations
+### Tips:
 
 Follow the below sentence to create great web tools.
 
