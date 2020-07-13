@@ -199,7 +199,7 @@
                         var currVal = Number(c.price);
                         if(c.hasOwnProperty('transaction_code')){
                             if(c.transaction_code !== 'buy'){
-                                currVal = Math.abs(Number(currVal));
+                                currVal = - Math.abs(Number(currVal));
                             }
                         }
                         return {price: (prevVal + currVal)};
